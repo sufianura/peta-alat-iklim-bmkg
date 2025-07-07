@@ -72,12 +72,12 @@ selected_alat_list = st.multiselect(
     default=["🗂️ Semua Alat"]
 )
 
-# Jika kosong atau pilih "Semua Alat" → tampilkan semua data
-if not selected_alat_list or "🗂️ Semua Alat" in selected_alat_list:
-    selected_alat_list = alat_list
+# Simpan label asli untuk PDF/tampilan, tapi proses semua data kalau "Semua Alat" dipilih
+show_all = not selected_alat_list or "🗂️ Semua Alat" in selected_alat_list
+alat_terpilih = alat_list if show_all else selected_alat_list
 
-# Gabungkan data dari semua alat terpilih
-selected_data = pd.concat([all_data[alat] for alat in selected_alat_list], ignore_index=True)
+# Gabungkan data dari alat yang dipilih
+selected_data = pd.concat([all_data[alat] for alat in alat_terpilih], ignore_index=True)
 
 # Tampilkan peta
 mymap = create_map(selected_data)
@@ -88,7 +88,7 @@ st_folium(mymap, width=1000, height=600)
 # -------------------------
 st.sidebar.header("📎 Unduh Peta (PDF)")
 
-if len(selected_alat_list) == 1:
+if len(selected_alat_list) == 1 and selected_alat_list[0] != "🗂️ Semua Alat":
     alat = selected_alat_list[0]
     pdf_path = os.path.join("peta", f"{alat}.pdf")
     if os.path.exists(pdf_path):
@@ -116,9 +116,7 @@ if not selected_data.empty:
         .reset_index(name="JUMLAH STASIUN")
         .rename(columns={"alat": "ALAT", "nama_propinsi": "PROVINSI"})
     )
-
     summary_df.insert(0, "NO", range(1, len(summary_df) + 1))
-
     st.dataframe(summary_df, use_container_width=True)
 else:
     st.info("Tidak ada data untuk ditampilkan dalam tabel.")
